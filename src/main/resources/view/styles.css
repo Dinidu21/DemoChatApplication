@@ -1,0 +1,68 @@
+.root {
+    -fx-background-color: #f5f5f5;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.header {
+    -fx-background-color: #4b6eaf;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 1);
+}
+
+.title-label {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.status-label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 3px 8px;
+    -fx-background-color: #2e4374;
+    -fx-background-radius: 4px;
+}
+
+.chat-area {
+    -fx-font-size: 14px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-color: #ddd;
+}
+
+.input-area {
+    -fx-background-color: #e8e8e8;
+    -fx-border-width: 1px 0 0 0;
+    -fx-border-color: #ccc;
+}
+
+.message-field {
+    -fx-background-radius: 20px;
+    -fx-padding: 8px 15px;
+    -fx-font-size: 14px;
+}
+
+.send-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-min-width: 80px;
+    -fx-cursor: hand;
+}
+
+.send-button:hover {
+    -fx-background-color: #3e8e41;
+}
+
+.exit-button {
+    -fx-background-color: #f44336;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-min-width: 80px;
+    -fx-cursor: hand;
+}
+
+.exit-button:hover {
+    -fx-background-color: #d32f2f;
+}
