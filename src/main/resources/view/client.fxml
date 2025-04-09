@@ -1,41 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.dinidu.demochatapp.controller.ClientController"
-            prefHeight="400.0" prefWidth="600.0" stylesheets="@styles.css">
+<BorderPane prefHeight="400.0" prefWidth="664.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dinidu.demochatapp.controller.ClientController">
     <top>
         <HBox alignment="CENTER" spacing="10" styleClass="header">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10"/>
+                <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
-            <Label text="Client Chat" styleClass="title-label"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="connectionStatus" text="Not Connected" styleClass="status-label"/>
+            <Label styleClass="title-label" text="Client Chat" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="connectionStatus" styleClass="status-label" text="Not Connected" />
         </HBox>
     </top>
 
     <center>
         <VBox spacing="10">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10"/>
+                <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
-            <TextArea fx:id="chatArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS" styleClass="chat-area"/>
+            <TextArea fx:id="chatArea" editable="false" styleClass="chat-area" wrapText="true" VBox.vgrow="ALWAYS" />
         </VBox>
     </center>
 
     <bottom>
-        <HBox spacing="10" alignment="CENTER" styleClass="input-area">
+        <HBox alignment="CENTER" prefHeight="66.0" prefWidth="664.0" spacing="10" styleClass="input-area">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10"/>
+                <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
-            <TextField fx:id="messageField" promptText="Type your message here..." HBox.hgrow="ALWAYS" styleClass="message-field"/>
-            <Button fx:id="sendButton" text="Send" onAction="#handleSendMessage" styleClass="send-button"/>
-            <Button fx:id="exitButton" text="Exit" onAction="#handleExit" styleClass="exit-button"/>
+            <TextField fx:id="messageField" prefHeight="34.0" prefWidth="430.0" promptText="Type your message here..." styleClass="message-field" HBox.hgrow="ALWAYS" />
+         <Button mnemonicParsing="false" onMouseClicked="#AttachImage" prefHeight="23.0" prefWidth="164.0" text="Attach Image" />
+            <Button fx:id="sendButton" onAction="#handleSendMessage" styleClass="send-button" text="Send" />
+            <Button fx:id="exitButton" onAction="#handleExit" styleClass="exit-button" text="Exit" />
         </HBox>
     </bottom>
 </BorderPane>

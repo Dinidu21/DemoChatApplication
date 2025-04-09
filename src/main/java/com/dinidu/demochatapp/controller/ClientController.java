@@ -7,12 +7,16 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
 
 public class ClientController {
     @FXML private TextArea chatArea;
@@ -81,8 +85,14 @@ public class ClientController {
         String message = messageField.getText().trim();
         if (!message.isEmpty() && socket != null && socket.isConnected()) {
             try {
+                // Let server know it's a TEXT message
+                outputStream.writeUTF("TEXT");
+                outputStream.flush();
+
+                // Send the actual message
                 outputStream.writeUTF(message);
                 outputStream.flush();
+
                 appendMessage("You", message);
                 messageField.clear();
 
@@ -94,6 +104,7 @@ public class ClientController {
             }
         }
     }
+
 
     @FXML
     private void handleExit(ActionEvent event) {
@@ -129,5 +140,36 @@ public class ClientController {
 
     private void updateStatus(String status) {
         Platform.runLater(() -> connectionStatus.setText(status));
+    }
+
+    public void AttachImage(MouseEvent mouseEvent) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select an Image");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
+
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null) {
+            try {
+                byte[] imageBytes = Files.readAllBytes(file.toPath());
+                // First, send a flag to let the server know it's an image
+                outputStream.writeUTF("IMAGE");
+                outputStream.flush();
+
+                // Then, send file name and size
+                outputStream.writeUTF(file.getName());
+                outputStream.writeInt(imageBytes.length);
+
+                // Send image bytes
+                outputStream.write(imageBytes);
+                outputStream.flush();
+
+                System.out.println("Image sent: " + file.getName());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

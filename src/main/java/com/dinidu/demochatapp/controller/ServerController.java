@@ -11,9 +11,11 @@ import javafx.stage.Stage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 
 public class ServerController {
     @FXML private TextArea chatArea;
@@ -65,15 +67,33 @@ public class ServerController {
         new Thread(() -> {
             try {
                 while (running) {
-                    String message = inputStream.readUTF();
-                    if (message.equalsIgnoreCase("exit")) {
-                        Platform.runLater(() -> {
-                            appendMessage("System", "Client has left the chat");
-                            updateStatus("Client disconnected");
-                        });
-                        break;
+                    String type = inputStream.readUTF(); // Could be "TEXT" or "IMAGE"
+
+                    if (type.equals("TEXT")) {
+                        String message = inputStream.readUTF();
+                        if (message.equalsIgnoreCase("exit")) {
+                            Platform.runLater(() -> {
+                                appendMessage("System", "Client has left the chat");
+                                updateStatus("Client disconnected");
+                            });
+                            break;
+                        }
+                        Platform.runLater(() -> appendMessage("Client", message));
+
+                    } else if (type.equals("IMAGE")) {
+                        String fileName = inputStream.readUTF();
+                        int size = inputStream.readInt();
+
+                        byte[] imageBytes = new byte[size];
+                        inputStream.readFully(imageBytes);
+
+                        // Save image to disk
+                        File imageFile = new File("received-images/" + fileName);
+                        imageFile.getParentFile().mkdirs(); // Ensure directory exists
+                        Files.write(imageFile.toPath(), imageBytes);
+
+                        Platform.runLater(() -> appendMessage("Client", "[Image received: " + fileName + "]"));
                     }
-                    Platform.runLater(() -> appendMessage("Client", message));
                 }
             } catch (IOException e) {
                 if (running) {
@@ -82,6 +102,7 @@ public class ServerController {
             }
         }).start();
     }
+
 
     @FXML
     private void handleSendMessage(ActionEvent event) {
