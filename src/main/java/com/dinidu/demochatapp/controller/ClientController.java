@@ -3,39 +3,76 @@ package com.dinidu.demochatapp.controller;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
-import javafx.stage.FileChooser;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ClientController {
     @FXML private TextArea chatArea;
     @FXML private TextField messageField;
+    @FXML private TextField usernameField;
     @FXML private Button sendButton;
     @FXML private Button exitButton;
+    @FXML private Button connectButton;
     @FXML private Label connectionStatus;
 
     private Socket socket;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
-    private volatile boolean running = true;
+    private volatile boolean running = false;
+    private String username;
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
+    // Callback for successful connection
+    private Runnable onSuccessfulConnect;
 
     public void initialize() {
-        // Connect to server in a separate thread to not block the UI
-        new Thread(this::connectToServer).start();
+        // Set a default username based on window title (will be set when window opens)
+        Platform.runLater(() -> {
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            usernameField.setText(stage.getTitle());
+        });
 
         // Disable send button if text field is empty
         sendButton.disableProperty().bind(messageField.textProperty().isEmpty());
+        connectButton.disableProperty().bind(usernameField.textProperty().isEmpty());
+
+    }
+
+    public void setOnSuccessfulConnect(Runnable callback) {
+        this.onSuccessfulConnect = callback;
+    }
+
+    @FXML
+    private void handleConnect(ActionEvent event) {
+        if (running) {
+            return;
+        }
+
+        username = usernameField.getText().trim();
+        if (username.isEmpty()) {
+            appendMessage("System: Please enter a username");
+            return;
+        }
+
+        // Update window title with username
+        Platform.runLater(() -> {
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setTitle(username);
+        });
+
+/*        // Disable username field and connect button
+        usernameField.setDisable(true);
+        connectButton.setDisable(true);*/
+
+        // Connect to server in a separate thread
+        new Thread(this::connectToServer).start();
     }
 
     private void connectToServer() {
@@ -46,17 +83,43 @@ public class ClientController {
             inputStream = new DataInputStream(socket.getInputStream());
             outputStream = new DataOutputStream(socket.getOutputStream());
 
-            updateStatus("Connected to server: " + socket.getInetAddress().getHostAddress());
-            appendMessage("System", "Connection established!");
+            // Send username as first message
+            outputStream.writeUTF(username);
+            outputStream.flush();
+
+            running = true;
+            updateStatus("Connected as: " + username);
+            appendMessage("System: Connected to the chat server!");
+
+            // Enable message controls
+            Platform.runLater(() -> {
+                // Unbind and then enable buttons
+                messageField.setDisable(false);
+                sendButton.disableProperty().unbind();  // Unbind the button disable property
+                sendButton.setDisable(false);
+                exitButton.setDisable(false);
+
+                // Call the callback to notify about successful connection
+                if (onSuccessfulConnect != null) {
+                    onSuccessfulConnect.run();
+                }
+            });
 
             // Start listening for messages
             receiveMessages();
 
         } catch (IOException e) {
             updateStatus("Failed to connect: " + e.getMessage());
-            e.printStackTrace();
+            appendMessage("System: Connection failed - " + e.getMessage());
+
+            // Re-enable connection controls
+            Platform.runLater(() -> {
+                usernameField.setDisable(false);
+                connectButton.setDisable(false);
+            });
         }
     }
+
 
     private void receiveMessages() {
         new Thread(() -> {
@@ -65,16 +128,21 @@ public class ClientController {
                     String message = inputStream.readUTF();
                     if (message.equalsIgnoreCase("exit")) {
                         Platform.runLater(() -> {
-                            appendMessage("System", "Server has left the chat");
+                            appendMessage("System: Server has closed the connection");
                             updateStatus("Disconnected from server");
+                            handleDisconnect();
                         });
                         break;
                     }
-                    Platform.runLater(() -> appendMessage("Server", message));
+                    Platform.runLater(() -> appendMessage(message));
                 }
             } catch (IOException e) {
                 if (running) {
-                    Platform.runLater(() -> updateStatus("Connection lost: " + e.getMessage()));
+                    Platform.runLater(() -> {
+                        updateStatus("Connection lost: " + e.getMessage());
+                        appendMessage("System: Connection lost - " + e.getMessage());
+                        handleDisconnect();
+                    });
                 }
             }
         }).start();
@@ -85,26 +153,14 @@ public class ClientController {
         String message = messageField.getText().trim();
         if (!message.isEmpty() && socket != null && socket.isConnected()) {
             try {
-                // Let server know it's a TEXT message
-                outputStream.writeUTF("TEXT");
-                outputStream.flush();
-
-                // Send the actual message
                 outputStream.writeUTF(message);
                 outputStream.flush();
-
-                appendMessage("You", message);
                 messageField.clear();
-
-                if (message.equalsIgnoreCase("exit")) {
-                    closeConnection();
-                }
             } catch (IOException e) {
-                updateStatus("Failed to send message: " + e.getMessage());
+                appendMessage("System: Failed to send message - " + e.getMessage());
             }
         }
     }
-
 
     @FXML
     private void handleExit(ActionEvent event) {
@@ -114,18 +170,35 @@ public class ClientController {
                 outputStream.flush();
             }
             closeConnection();
+            handleDisconnect();
 
-            // Close the window
-            Stage stage = (Stage) exitButton.getScene().getWindow();
-            stage.close();
+            if (((Button)event.getSource()).getText().equals("Close")) {
+                // Close the window if explicitly requested
+                Stage stage = (Stage) exitButton.getScene().getWindow();
+                stage.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void closeConnection() {
+    private void handleDisconnect() {
         running = false;
+        closeConnection();
+
+        // Reset UI
+        Platform.runLater(() -> {
+            usernameField.setDisable(false);
+            connectButton.setDisable(false);
+            messageField.setDisable(true);
+            sendButton.setDisable(true);
+            exitButton.setText("Close");
+        });
+    }
+
+    private void closeConnection() {
         try {
+            running = false;
             if (inputStream != null) inputStream.close();
             if (outputStream != null) outputStream.close();
             if (socket != null) socket.close();
@@ -134,42 +207,12 @@ public class ClientController {
         }
     }
 
-    private void appendMessage(String sender, String message) {
-        chatArea.appendText(sender + ": " + message + "\n");
+    private void appendMessage(String message) {
+        String timestamp = timeFormat.format(new Date());
+        chatArea.appendText("[" + timestamp + "] " + message + "\n");
     }
 
     private void updateStatus(String status) {
         Platform.runLater(() -> connectionStatus.setText(status));
-    }
-
-    public void AttachImage(MouseEvent mouseEvent) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select an Image");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
-        );
-
-        File file = fileChooser.showOpenDialog(null);
-        if (file != null) {
-            try {
-                byte[] imageBytes = Files.readAllBytes(file.toPath());
-                // First, send a flag to let the server know it's an image
-                outputStream.writeUTF("IMAGE");
-                outputStream.flush();
-
-                // Then, send file name and size
-                outputStream.writeUTF(file.getName());
-                outputStream.writeInt(imageBytes.length);
-
-                // Send image bytes
-                outputStream.write(imageBytes);
-                outputStream.flush();
-
-                System.out.println("Image sent: " + file.getName());
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

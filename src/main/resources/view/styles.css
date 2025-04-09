@@ -14,6 +14,11 @@
     -fx-font-weight: bold;
 }
 
+.name-label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
 .status-label {
     -fx-text-fill: white;
     -fx-font-size: 14px;
@@ -22,11 +27,47 @@
     -fx-background-radius: 4px;
 }
 
+.section-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4b6eaf;
+}
+
 .chat-area {
     -fx-font-size: 14px;
     -fx-background-radius: 5px;
     -fx-border-radius: 5px;
     -fx-border-color: #ddd;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-box-border: transparent;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #ddd;
+    -fx-padding: 0 1px 0 1px;
+}
+
+.client-list {
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-color: #ddd;
+}
+
+.client-list .list-cell {
+    -fx-padding: 5px;
+}
+
+.client-list .list-cell:filled:selected {
+    -fx-background-color: #4b6eaf;
+    -fx-text-fill: white;
+}
+
+.count-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666;
 }
 
 .input-area {
@@ -41,7 +82,7 @@
     -fx-font-size: 14px;
 }
 
-.send-button {
+.send-button, .connect-button {
     -fx-background-color: #4CAF50;
     -fx-text-fill: white;
     -fx-font-weight: bold;
@@ -50,7 +91,7 @@
     -fx-cursor: hand;
 }
 
-.send-button:hover {
+.send-button:hover, .connect-button:hover {
     -fx-background-color: #3e8e41;
 }
 
@@ -65,4 +106,8 @@
 
 .exit-button:hover {
     -fx-background-color: #d32f2f;
+}
+
+.connect-button {
+    -fx-min-width: 100px;
 }
